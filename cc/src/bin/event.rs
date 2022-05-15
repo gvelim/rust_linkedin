@@ -1,30 +1,3 @@
-use chrono::prelude::*;
-
-#[derive(Debug, PartialOrd, PartialEq)]
-struct ImportantEvent {
-    name: String,
-    date: Date<Utc>,
-}
-
-trait Deadline {
-    fn lapsed(&self) -> bool;
-}
-
-impl Deadline for ImportantEvent {
-    fn lapsed(&self) -> bool {
-        self.date < Utc::now().date()
-    }
-}
-
-impl ImportantEvent {
-    fn new(name: String, date: Date<Utc>) -> ImportantEvent {
-        ImportantEvent {
-            name,
-            date
-        }
-    }
-}
-
 
 fn main() {
     todo!()
@@ -32,8 +5,8 @@ fn main() {
 
 #[cfg(test)]
 mod test {
-    use chrono::Duration;
-    use super::*;
+    use chrono::{prelude::*, Duration};
+    use rust_linkedin::*;
 
     #[test]
     fn test_not_lapsed() {
