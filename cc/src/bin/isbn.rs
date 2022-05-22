@@ -15,9 +15,8 @@ impl FromStr for ISBN {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let numbers = String::new();
         let sum : u32 = s.splitn(5,'-')
-            .fold(numbers,|c, i| c + i)
+            .fold("".to_string(),|c, i| c + i)
             .chars()
             .map(|s| if s.is_ascii_digit() { u32::from(s)-48 } else {panic!("non digit")} )
             .enumerate()
