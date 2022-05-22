@@ -23,7 +23,7 @@ impl FromStr for ISBN {
             .map(|(i,n)| if i % 2 == 1 { n*3 } else {n} )
             .sum();
 
-        println!("Sum: {}", sum % 10);
+        println!("Sum: {}", 10-10-sum % 10);
         Ok(ISBN { isbn: s.to_string() })
     }
 }
