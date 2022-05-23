@@ -10,7 +10,8 @@ struct ISBN {
 enum ISBNErr {
     InputTooLong,
     InputTooSort,
-    FailedChecksum
+    FailedChecksum,
+    InvalidCheckSum
 }
 
 impl FromStr for ISBN {
@@ -27,12 +28,15 @@ impl FromStr for ISBN {
         match s.len() {
             0..=16 => Err(ISBNErr::InputTooSort),
             17 => {
-                let checksum = s.chars().last().unwrap().to_digit(10).unwrap();
-                let calc_csum = (10 - sum % 10) % 10;
-                if calc_csum == checksum {
-                    Ok(ISBN { isbn: s.to_string() })
+                if let Some(checksum) = s.chars().last().unwrap().to_digit(10) {
+                    let calc_csum = (10 - sum % 10) % 10;
+                    if calc_csum == checksum {
+                        Ok(ISBN { isbn: s.to_string() })
+                    } else {
+                        Err(ISBNErr::FailedChecksum)
+                    }
                 } else {
-                    Err(ISBNErr::FailedChecksum)
+                    Err(ISBNErr::InvalidCheckSum)
                 }
             },
             _ => Err(ISBNErr::InputTooLong),
@@ -54,6 +58,13 @@ mod test {
         assert_eq!(
             "978-3-16-14840-0".parse::<ISBN>(),
             Err(ISBNErr::InputTooSort)
+        )
+    }
+    #[test]
+    fn test_invalid_checksum() {
+        assert_eq!(
+            "978-3-16-148410-$".parse::<ISBN>(),
+            Err(ISBNErr::InvalidCheckSum)
         )
     }
     #[test]
