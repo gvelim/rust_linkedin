@@ -41,7 +41,7 @@ impl FromStr for ISBN {
 }
 
 fn main() {
-    let isbn = ISBN::from_str("978-0-306-40615-7");
+    let isbn : ISBN = "978-0-306-40615-7".parse().unwrap();
     println!("{:?}",isbn);
 }
 
@@ -52,14 +52,14 @@ mod test {
     #[test]
     fn test_input_sort() {
         assert_eq!(
-            ISBN::from_str("978-3-16-14840-0"),
+            "978-3-16-14840-0".parse::<ISBN>(),
             Err(ISBNErr::InputTooSort)
         )
     }
     #[test]
     fn test_input_long() {
         assert_eq!(
-            ISBN::from_str("978-3-16-1484110-0"),
+            "978-3-16-1484110-0".parse::<ISBN>(),
             Err(ISBNErr::InputTooLong)
         )
     }
@@ -75,8 +75,7 @@ mod test {
         ];
         tests.into_iter()
             .for_each( |(inp,out)| {
-                let isbn = ISBN::from_str(inp);
-                assert_eq!(isbn, out)
+                assert_eq!(inp.parse::<ISBN>(), out)
             })
     }
 }
