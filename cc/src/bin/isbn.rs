@@ -18,16 +18,17 @@ impl FromStr for ISBN {
     type Err = ISBNErr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let sum: u32 = s.chars()
-            .take(15)
-            .filter_map( |s| s.to_digit(10) )
-            .enumerate()
-            .map(|(i, n)| if i % 2 == 1 { n * 3 } else { n })
-            .sum();
 
         match s.len() {
             0..=16 => Err(ISBNErr::InputTooSort),
             17 => {
+                let sum: u32 = s.chars()
+                    .take(15)
+                    .filter_map( |s| s.to_digit(10) )
+                    .enumerate()
+                    .map(|(i, n)| if i % 2 == 1 { n * 3 } else { n })
+                    .sum();
+
                 if let Some(checksum) = s.chars().last().unwrap().to_digit(10) {
                     let calc_csum = (10 - sum % 10) % 10;
                     if calc_csum == checksum {
@@ -45,7 +46,7 @@ impl FromStr for ISBN {
 }
 
 fn main() {
-    let isbn : ISBN = "978-0-306-40615-7".parse().unwrap();
+    let isbn = "978-0-306-40615-7".parse::<ISBN>();
     println!("{:?}",isbn);
 }
 
