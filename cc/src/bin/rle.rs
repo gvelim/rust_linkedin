@@ -1,6 +1,5 @@
 
 mod run_length_encoding {
-    use std::ops::Add;
 
     pub fn encode(text: &str) -> String {
         let mut out : Vec<(u8,char)> = vec![];
@@ -9,13 +8,8 @@ mod run_length_encoding {
         text.chars()
             .skip(1)
             .for_each(|c| {
-                if c == cur.1 {
-                    if cur.0 < 9 {
-                        cur.0 += 1;
-                    } else {
-                        out.push(cur);
-                        cur.0 = 1;
-                    }
+                if c == cur.1 && cur.0 < 9 {
+                    cur.0 += 1;
                 } else {
                     out.push(cur);
                     cur = (1u8,c);
@@ -24,13 +18,18 @@ mod run_length_encoding {
         out.push(cur);
 
         out.into_iter()
-            .fold(String::new(), |s, (n, c)|
-                s.add(&format!("{}{}",n,c) )
-            )
+            .fold(String::new(), |s, (n, c)| s + &format!("{}{}",n,c) )
     }
 
-    pub fn decode(_text: &str) -> String {
-        todo!()
+    pub fn decode(text: &str) -> String {
+        let v : Vec<char> = text.chars().collect();
+        let mut output = String::new();
+        v.chunks(2)
+            .map(|s| (s[0].to_digit(10).unwrap(), s[1]))
+            .for_each(|(n, c)| {
+                (0..n).for_each( |_| output.push(c))
+            });
+        output
     }
 }
 
