@@ -29,10 +29,10 @@ impl RgbChannels for RGB {
 #[derive(Debug)]
 enum RGBError {
     TooShort,
-    InvalidLiterals,
     NoLeadingHash,
-    NotAHexCode,
-    OutOfBounds,
+    InvalidRedChannelValue,
+    InvalidGreenChannelValue,
+    InvalidBlueChannelValue,
 }
 
 impl Display for RGB {
@@ -47,22 +47,18 @@ impl FromStr for RGB {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some(rgb) = s.strip_prefix("#") {
 
-            let vch: Vec<Option<u32>> =  rgb.chars().map(|c| c.to_digit(16) ).collect();
-
-            if vch.contains(&None) {
-                return Err(RGBError::NotAHexCode)
-            }
-            if vch.len() != 6 {
+            if rgb.len() != 6 {
                 return Err(RGBError::TooShort)
             }
 
-            let output: Vec<u8> = vch.chunks(2)
-                .map(|ch| {
-                    ((ch[0].unwrap() as u8) << 4) + ch[1].unwrap() as u8
-                })
-                .collect();
+            let r = u8::from_str_radix(&rgb[0..2], 16)
+                .or_else(|_| Err(RGBError::InvalidRedChannelValue))?;
+            let g = u8::from_str_radix(&rgb[2..4], 16)
+                .or_else(|_| Err(RGBError::InvalidGreenChannelValue))?;
+            let b = u8::from_str_radix(&rgb[4..6], 16)
+                .or_else(|_| Err(RGBError::InvalidBlueChannelValue))?;
 
-            Ok(RGB(output[0],output[1],output[2]))
+            Ok(RGB(r,g,b))
         } else {
             Err(RGBError::NoLeadingHash)
         }
@@ -111,7 +107,7 @@ mod test {
     #[test]
     #[should_panic]
     fn no_leading_hash() {
-        let _: RGB = "#aabbcc".parse().unwrap();
+        let _: RGB = "aabbcc".parse().unwrap();
     }
 
     #[test]
