@@ -16,11 +16,9 @@ impl RgbChannels for RGB {
     fn r(&self) -> u8 {
         self.0
     }
-
     fn g(&self) -> u8 {
         self.1
     }
-
     fn b(&self) -> u8 {
         self.2
     }
