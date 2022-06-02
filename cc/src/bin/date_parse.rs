@@ -29,37 +29,53 @@ fn flexible_date_parse(text: &str) -> Option<NaiveDate> {
 
     parts.into_iter()
         .for_each( |el| {
-        match el {
-            // year
-            (4, _, res) if res.is_ok() => date.year = res.unwrap() as i32,
-            // textual month, we check the non-numeric error
-            (3, month, res) if res.is_err() => {
-                date.month = match month {
-                    "Jan" => 1,
-                    "Feb" => 2,
-                    "Mar" => 3,
-                    "Apr" => 4,
-                    "Jun" => 5,
-                    "Jul" => 6,
-                    // if garbage store 0 which will result to None
-                    _ => { println!( "Invalid month: {:?}!!", &month ); 0 }
-                }
-            },
-            // either month or day and is numeric
-            (2, _, res) if res.is_ok() => {
-                let num = res.unwrap();
-                match &mut date {
-                    // set Date if <=31 and Year and Month already set
-                    ParseDate{year: 1.. , month: 1..=12, date: d } if num < 32 => *d = num as u32,
-                    // set Month if <=12 and Year already set but not Date
-                    ParseDate{year: 1.. , month: m, date: 0} if num < 13 => *m = num as u32,
-                    _ => println!( "Invalid numeric: {:?}!!",num ),
-                }
-            },
-            (_,_,_) => (),
-        }
-    });
+            //println!("{:?}",el);
+            match el {
+                // year
+                (4, _, res) if res.is_ok() => date.year = res.unwrap() as i32,
+                // textual month, we check the non-numeric error
+                (3, month, res) if res.is_err() => {
+                    date.month = match month {
+                        "Jan" => 1,
+                        "Feb" => 2,
+                        "Mar" => 3,
+                        "Apr" => 4,
+                        "May" => 5,
+                        "Jun" => 6,
+                        "Jul" => 7,
+                        "Aug" => 8,
+                        "Sep" => 9,
+                        "Oct" => 10,
+                        "Nov" => 11,
+                        "Dec" => 12,
+                        // if garbage store 0 which will result to None
+                        _ => {
+                            println!("Invalid month: {:?}!!", &month);
+                            0
+                        }
+                    }
+                },
+                // either month or day and is numeric
+                (2, _, res) if res.is_ok() => {
+                    let num = res.unwrap();
+                    match &mut date {
+                        ParseDate { year: 1.., month: m, date: d } => {
+                            match (&m, &d, num) {
+                                (0, 1..=31, month @ 1..=12) => *m = month as u32,
+                                (1..=12, 0, date @ 1..=31) => *d = date as u32,
+                                (0, 0, month @ 1..=12) => *m = month as u32,
+                                (0, 0, date @ 1..=31) => *d = date as u32,
+                                _ => (),
+                            }
+                        }
+                        _ => println!("Invalid numeric: {:?}!!", num),
+                    }
+                },
+                (_, _, _) => (),
+            }
+        });
 
+    //println!("{:?}", &date);
     match date {
         ParseDate { year:0i32, ..} |
         ParseDate { year:_, month:0u32, ..} |
@@ -79,11 +95,12 @@ fn main() {
         "Mar.05.21",
         "Mar.2021.05",
         "05.2021.Mar",
-        "2021.05.Mar",
-        "2021.Mar.05",
-        "12-2010-31",
+        "2021/05/Mar",
+        "2021/Mar.05",
+        "12-2010/31",
         "2010-12-31",
         "31-12-2010",
+        "31-13-2010",
         "not a date",
     ];
 
