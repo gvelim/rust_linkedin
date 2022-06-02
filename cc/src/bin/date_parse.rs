@@ -49,10 +49,15 @@ fn flexible_date_parse(text: &str) -> Option<NaiveDate> {
             (2, _, res) if res.is_ok() => {
                 let num = res.unwrap();
                 match &mut date {
-                    // set Date if <=31 and Year and Month already set
-                    ParseDate{year: 1.. , month: 1..=12, date: d } if num < 32 => *d = num as u32,
-                    // set Month if <=12 and Year already set but not Date
-                    ParseDate{year: 1.. , month: m, date: 0} if num < 13 => *m = num as u32,
+                    ParseDate{year: _ , month: m, date: d} => {
+                        match (&m, &d, num) {
+                            (0, 1..=31, month@ 1..=12) => *m = month as u32,
+                            (1..=12, 0, date@ 1..=31) => *d = date as u32,
+                            (0, 0, month@ 1..=12) => *m = month as u32,
+                            (0, 0, date@ 1..=31) => *d = date as u32,
+                            _ => (),
+                        }
+                    }
                     _ => println!( "Invalid numeric: {:?}!!",num ),
                 }
             },
@@ -84,6 +89,7 @@ fn main() {
         "12-2010-31",
         "2010-12-31",
         "31-12-2010",
+        "31-13-2010",
         "not a date",
     ];
 
