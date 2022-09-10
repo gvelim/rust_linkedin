@@ -43,19 +43,19 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
     queue.push_front(((start,0), 0usize));
 
     // while a node in the queue pick the node
-    while let Some((node, path_len)) = queue.pop_front() {
+    while let Some((node, path_pos)) = queue.pop_front() {
 
         // push start node in the path
-        path.truncate(path_len);
+        path.truncate(path_pos);
         path.push(node);
 
-
+        // if node has edges
         if let Some(edges) = g.edges.get(&node.0) {
 
             // for each edge
             for edge in edges {
 
-                // if edge node is target node
+                // if edge node is the target node
                 if edge.0 == goal {
                     // capture all visited (node,cost) in the stack
                     path.push(*edge);
@@ -63,9 +63,10 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
                     println!("\t Path! {:?}", path);
                     path.pop();
                 } else {
-                    // push node
-                    queue.push_front((*edge, path.len()));
-                    // continue
+                    if !path.contains(edge) {
+                        // push edge node to further explore
+                        queue.push_front((*edge, path.len()));
+                    }
                 }
             }
         } else {
@@ -127,7 +128,7 @@ mod test {
         let edge_list = include!("small_graph.in");
         let g = Graph::from_edge_list(&edge_list);
 
-        let path = shortest_path(&g, 1, 5);
+        let path = shortest_path(&g, 1, 6);
         assert!(path.is_some());
         assert_eq!(path.unwrap().1, 4);
     }
