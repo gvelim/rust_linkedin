@@ -32,13 +32,12 @@ impl Graph {
 }
 
 
-fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<(Node,Cost)>, Cost)> {
+fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)> {
 
-    let mut paths: Vec<(Vec<(Node, Cost)>, Cost)> = Vec::new();
-    let mut path: Vec<(Node,Cost)> = Vec::new();
+    let mut path: Vec<Node> = Vec::with_capacity(g.nodes.len());
     let mut queue = VecDeque::new();
-    let mut trail_cost = u32::MAX as Cost;
     let mut best_cost = u32::MAX as Cost;
+    let mut best_path = None;
 
     //let mut visited = HashSet::<Node>::new();
 
@@ -49,12 +48,12 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<(Node,Cost)>
     // while a node in the queue pick the node
     while let Some((node, path_pos, cost)) = queue.pop_front() {
 
-        // push start node in the path
+        // push start node in the path/trail
         path.truncate(path_pos);
-        path.push(node);
-        trail_cost = cost + node.1;
+        path.push(node.0);
+        let trail_cost = cost + node.1;
 
-        println!("\t\t Scan: ({trail_cost})::{:?}", path);
+        //println!("\t\t Scan: ({trail_cost})::{:?}", path);
 
         // if the path cost is higher than the path already found don't pursue any further
         if trail_cost < best_cost {
@@ -64,15 +63,15 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<(Node,Cost)>
                 for edge in edges {
 
                     // if edge node is the target node
-                    if edge.0 == goal {
-                        // capture all visited (node,cost) in the stack
+                    // and the cost to get there still better than best cost
+                    if edge.0 == goal && trail_cost+edge.1 < best_cost {
                         best_cost = trail_cost + edge.1;
-                        path.push(*edge);
-                        paths.push((path.clone(), best_cost));
-                        println!("\t Path!: ({best_cost})::{:?}", path);
+                        path.push(edge.0);
+                        best_path = Some( (path.clone(), best_cost) );
+                        println!("\t Path!: {:?}", best_path);
                         path.pop();
                     } else {
-                        if !path.contains(edge) {
+                        if !path.contains(&edge.0) {
                             // push edge node to further explore
                             queue.push_front((*edge, path.len(), trail_cost));
                         }
@@ -81,23 +80,12 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<(Node,Cost)>
             } else {
                 path.pop();
             }
-        } else {
-            println!("\t\t trail cost exceeds best cost");
-        }
+        } 
 
     }
 
-    // select lowest cost
-    let mut lowest_cost= u32::MAX as Cost;
-    paths.iter()
-        .fold( None, |mut shorted_path, path| {
-            if path.1 < lowest_cost {
-                println!("\t Shortest Path! {:?}", path);
-                lowest_cost = path.1;
-                shorted_path = Some(path.clone())
-            }
-            shorted_path
-        })
+    println!("Path: {:?}", best_path);
+    best_path
 }
 
 fn main() {
@@ -114,15 +102,15 @@ fn main() {
 mod test {
     use super::*;
 
-    // #[test]
-    // fn large_graph() {
-    //     let edge_list = include!("large_graph.in");
-    //     let g = Graph::from_edge_list(&edge_list);
-    //
-    //     let path = shortest_path(&g, 1000, 9000);
-    //     assert!(path.is_some());
-    //     assert_eq!(path.unwrap().1, 24);
-    // }
+    #[test]
+    fn large_graph() {
+        let edge_list = include!("large_graph.in");
+        let g = Graph::from_edge_list(&edge_list);
+
+        let path = shortest_path(&g, 1000, 9000);
+        assert!(path.is_some());
+        assert_eq!(path.unwrap().1, 24);
+    }
     #[test]
     fn small_graph() {
         let edge_list = include!("small_graph.in");
@@ -130,6 +118,6 @@ mod test {
 
         let path = shortest_path(&g, 1, 6);
         assert!(path.is_some());
-        assert_eq!(path.unwrap().1, 4);
+        assert_eq!(path.unwrap().1, 6);
     }
 }
