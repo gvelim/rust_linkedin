@@ -32,64 +32,64 @@ impl Graph {
 }
 
 
-fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)> {
+fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<(Node,Cost)>, Cost)> {
 
-    let mut paths = Vec::new();
-    let mut path = Vec::new();
+    let mut paths: Vec<(Vec<(Node, Cost)>, Cost)> = Vec::new();
+    let mut path: Vec<(Node,Cost)> = Vec::new();
     let mut queue = VecDeque::new();
+    let mut trail_cost = u32::MAX as Cost;
+    let mut best_cost = u32::MAX as Cost;
+
     //let mut visited = HashSet::<Node>::new();
 
     // push start node in the DFS queue
-    queue.push_front(((start,0), 0usize));
+    // Node/Cost, trail path pointer, cost)
+    queue.push_front(((start,0), 0usize, 0 as Cost));
 
     // while a node in the queue pick the node
-    while let Some((node, path_pos)) = queue.pop_front() {
+    while let Some((node, path_pos, cost)) = queue.pop_front() {
 
         // push start node in the path
         path.truncate(path_pos);
         path.push(node);
+        trail_cost = cost + node.1;
 
-        // if node has edges
-        if let Some(edges) = g.edges.get(&node.0) {
+        println!("\t\t Scan: ({trail_cost})::{:?}", path);
 
-            // for each edge
-            for edge in edges {
+        // if the path cost is higher than the path already found don't pursue any further
+        if trail_cost < best_cost {
+            if let Some(edges) = g.edges.get(&node.0) {
 
-                // if edge node is the target node
-                if edge.0 == goal {
-                    // capture all visited (node,cost) in the stack
-                    path.push(*edge);
-                    paths.push(path.clone());
-                    println!("\t Path! {:?}", path);
-                    path.pop();
-                } else {
-                    if !path.contains(edge) {
-                        // push edge node to further explore
-                        queue.push_front((*edge, path.len()));
+                // for each edge
+                for edge in edges {
+
+                    // if edge node is the target node
+                    if edge.0 == goal {
+                        // capture all visited (node,cost) in the stack
+                        best_cost = trail_cost + edge.1;
+                        path.push(*edge);
+                        paths.push((path.clone(), best_cost));
+                        println!("\t Path!: ({best_cost})::{:?}", path);
+                        path.pop();
+                    } else {
+                        if !path.contains(edge) {
+                            // push edge node to further explore
+                            queue.push_front((*edge, path.len(), trail_cost));
+                        }
                     }
                 }
+            } else {
+                path.pop();
             }
         } else {
-            path.pop();
+            println!("\t\t trail cost exceeds best cost");
         }
-    }
 
-    // calculate path cost
-    let mut p : Vec<(Vec<Node>, Cost)> = Vec::new() ;
-    paths.iter()
-        .for_each(|path| {
-            p.push(path.iter()
-                .fold( (Vec::<Node>::new(),0), |(mut nodes,mut cost), path| {
-                    nodes.push(path.0);
-                    cost += path.1;
-                    (nodes,cost)
-                })
-            );
-        });
+    }
 
     // select lowest cost
     let mut lowest_cost= u32::MAX as Cost;
-    p.iter()
+    paths.iter()
         .fold( None, |mut shorted_path, path| {
             if path.1 < lowest_cost {
                 println!("\t Shortest Path! {:?}", path);
