@@ -52,43 +52,36 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
         path.truncate(path_pos);
         path.push(node.0);
 
-        // println!("\t\t Scan: ({:?}, {path_cost})", path);
+        println!("\t Scan: ({:?}, {path_cost})", path);
+        if let Some(edges) = g.edges.get(&node.0) {
 
-        // if the path cost is higher than the path already found don't pursue any further
-        if path_cost < best_cost {
-            if let Some(edges) = g.edges.get(&node.0) {
+            // for each edge
+            for edge in edges {
 
-                // for each edge
-                for edge in edges {
-
-                    // if edge node is the target node
-                    // and the cost to get there still better than best cost
-                    let edge_cost = path_cost + edge.1;
-                    if  edge_cost< best_cost {
-                        if edge.0 == goal {
-                            best_cost = edge_cost;
-                            path.push(edge.0);
-                            best_path = Some( (path.clone(), best_cost) );
-                            println!("\t Path!: {:?}", best_path);
-                            path.pop();
-                        } else {
-                            if !path.contains(&edge.0) {
-                                // push edge node to further explore
-                                queue.push_front((*edge, path.len(), edge_cost));
-                            }
+                // if edge node is the target node
+                // and the cost to get there still better than best cost
+                let edge_cost = path_cost + edge.1;
+                if edge_cost < best_cost {
+                    if edge.0 == goal {
+                        best_cost = edge_cost;
+                        path.push(edge.0);
+                        best_path = Some( (path.clone(), best_cost) );
+                        println!("\t Path!: {:?}", best_path);
+                        path.pop();
+                    } else {
+                        if !path.contains(&edge.0) {
+                            // push edge node to further explore
+                            queue.push_front((*edge, path.len(), edge_cost));
                         }
-                    } 
-                    // else {
-                    //     println!("\t\t\t Ignore: Edge::({:?}) has path cost ({edge_cost}) that exceeds best cost::({best_cost})",edge);
-                    // }
+                    }
                 }
-            } else {
-                path.pop();
+                else {
+                    println!("\t\t\t Ignore: Edge::({:?}) has path cost ({edge_cost}) that exceeds best cost::({best_cost})",edge);
+                }
             }
-        } 
-        // else {
-        //     println!("\t\t Ignoring {:?}; path cost ({path_cost}) exceeds best cost::({best_cost})", node);
-        // }
+        } else {
+            path.pop();
+        }
 
     }
 
@@ -124,7 +117,7 @@ mod test {
         let edge_list = include!("small_graph.in");
         let g = Graph::from_edge_list(&edge_list);
 
-        let path = shortest_path(&g, 1, 5);
+        let path = shortest_path(&g, 2, 5);
         assert!(path.is_some());
         assert_eq!(path.unwrap().1, 4);
     }
