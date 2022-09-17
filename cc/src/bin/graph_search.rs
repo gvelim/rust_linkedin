@@ -49,24 +49,30 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
     let mut best_path = None;
 
     // push start node in the DFS queue
-    // Node/Cost, trail path pointer, cost)
     queue.push_front(start);
 
     // while a node in the queue pick the node
     while let Some(node) = queue.pop_front() {
 
+        let path_cost = node_cost[&node].0;
+
+        // if node is the target node
+        // assuming cost is the lowest cost
         if node == goal {
+            // clear path for use in case we find another path
+            // build the shortest path by pushing target node first
+            path.clear();
             path.push(node);
-            let mut cur_node  = node;
+            // set target as current node
+            let mut cur_node= node;
+            // backtrace all parents until you reached None, that is, the start node
             while let Some(parent) = node_cost[&cur_node].1 {
                 path.push(parent);
                 cur_node = parent;
             }
             best_path = Some((path.clone(), node_cost[&node].0));
             println!("\t Path!: {:?}", best_path);
-            path.truncate(0);
         } else {
-            let path_cost = node_cost[&node].0;
             if let Some(edges) = g.edges.get(&node) {
 
                 // for each edge
@@ -85,8 +91,6 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
                             );
 
                         queue.push_front(edge.0);
-                    } else {
-                        println!("\t\t\t Ignore: Edge::({:?}) has path cost ({edge_cost}) that exceeds previous cost", edge);
                     }
                 }
             }
@@ -112,15 +116,15 @@ fn main() {
 mod test {
     use super::*;
 
-    // #[test]
-    // fn large_graph() {
-    //     let edge_list = include!("large_graph.in");
-    //     let g = Graph::from_edge_list(&edge_list);
-    //
-    //     let path = shortest_path(&g, 1000, 4000);
-    //     assert!(path.is_some());
-    //     assert_eq!(path.unwrap().1, 24);
-    // }
+    #[test]
+    fn large_graph() {
+        let edge_list = include!("large_graph.in");
+        let g = Graph::from_edge_list(&edge_list);
+
+        let path = shortest_path(&g, 1000, 9000);
+        assert!(path.is_some());
+        assert_eq!(path.unwrap().1, 22);
+    }
     #[test]
     fn small_graph() {
         let edge_list = include!("small_graph.in");
