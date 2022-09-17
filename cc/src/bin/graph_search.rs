@@ -1,4 +1,8 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{
+    HashMap,
+    HashSet,
+    vec_deque::VecDeque
+};
 
 type Node = usize;
 type Cost = usize;
@@ -36,51 +40,56 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
 
     let mut path: Vec<Node> = Vec::with_capacity(g.nodes.len());
     let mut queue = VecDeque::new();
-    let mut best_cost = u32::MAX as Cost;
+    let mut node_cost = g.nodes.iter()
+        .fold( HashMap::<Node,(Cost,Option<Node>)>::new(), |mut cost_history, node| {
+            cost_history.entry(*node).or_insert( (Cost::MAX, None));
+            cost_history
+        });
+    node_cost.entry(start).and_modify(|c| *c = (0, None) );
     let mut best_path = None;
-
-    //let mut visited = HashSet::<Node>::new();
 
     // push start node in the DFS queue
     // Node/Cost, trail path pointer, cost)
-    queue.push_front(((start,0), 0usize, 0 as Cost));
+    queue.push_front(start);
 
     // while a node in the queue pick the node
-    while let Some((node, path_pos, path_cost)) = queue.pop_front() {
+    while let Some(node) = queue.pop_front() {
 
-        // push start node in the path/trail
-        path.truncate(path_pos);
-        path.push(node.0);
+        if node == goal {
+            path.push(node);
+            let mut cur_node  = node;
+            while let Some(parent) = node_cost[&cur_node].1 {
+                path.push(parent);
+                cur_node = parent;
+            }
+            best_path = Some((path.clone(), node_cost[&node].0));
+            println!("\t Path!: {:?}", best_path);
+            path.truncate(0);
+        } else {
+            let path_cost = node_cost[&node].0;
+            if let Some(edges) = g.edges.get(&node) {
 
-        println!("\t Scan: ({:?}, {path_cost})", path);
-        if let Some(edges) = g.edges.get(&node.0) {
+                // for each edge
+                for edge in edges {
 
-            // for each edge
-            for edge in edges {
+                    // calc the new path cost to the edge
+                    let edge_cost = path_cost + edge.1;
 
-                // if edge node is the target node
-                // and the cost to get there still better than best cost
-                let edge_cost = path_cost + edge.1;
-                if edge_cost < best_cost {
-                    if edge.0 == goal {
-                        best_cost = edge_cost;
-                        path.push(edge.0);
-                        best_path = Some( (path.clone(), best_cost) );
-                        println!("\t Path!: {:?}", best_path);
-                        path.pop();
+                    // if new edge cost < existing edge cost
+                    if edge_cost < node_cost[&edge.0].0 {
+
+                        // set the new lower cost coming from new parent Node
+                        node_cost.entry(edge.0)
+                            .and_modify(|c|
+                                *c = (edge_cost, Some(node))
+                            );
+
+                        queue.push_front(edge.0);
                     } else {
-                        if !path.contains(&edge.0) {
-                            // push edge node to further explore
-                            queue.push_front((*edge, path.len(), edge_cost));
-                        }
+                        println!("\t\t\t Ignore: Edge::({:?}) has path cost ({edge_cost}) that exceeds previous cost", edge);
                     }
                 }
-                else {
-                    println!("\t\t\t Ignore: Edge::({:?}) has path cost ({edge_cost}) that exceeds best cost::({best_cost})",edge);
-                }
             }
-        } else {
-            path.pop();
         }
 
     }
@@ -119,6 +128,6 @@ mod test {
 
         let path = shortest_path(&g, 2, 5);
         assert!(path.is_some());
-        assert_eq!(path.unwrap().1, 4);
+        assert_eq!(path.unwrap().1, 2);
     }
 }
