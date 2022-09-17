@@ -38,14 +38,20 @@ impl Graph {
 
 fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)> {
 
-    let mut path: Vec<Node> = Vec::with_capacity(g.nodes.len());
+    let mut path: Vec<Node> = Vec::new();
     let mut queue = VecDeque::new();
+
+    // reset all node costs to MAX value with no path-parent nodes
     let mut node_cost = g.nodes.iter()
         .fold( HashMap::<Node,(Cost,Option<Node>)>::new(), |mut cost_history, node| {
             cost_history.entry(*node).or_insert( (Cost::MAX, None));
             cost_history
         });
-    node_cost.entry(start).and_modify(|c| *c = (0, None) );
+    // set cost at start node to zero with no parent
+    node_cost.entry(start)
+        .and_modify(
+            |c| *c = (0, None)
+        );
     let mut best_path = None;
 
     // push start node in the DFS queue
@@ -70,27 +76,28 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
                 path.push(parent);
                 cur_node = parent;
             }
-            best_path = Some((path.clone(), node_cost[&node].0));
+            best_path = Some((path.clone(), path_cost));
             println!("\t Path!: {:?}", best_path);
         } else {
             if let Some(edges) = g.edges.get(&node) {
 
                 // for each edge
-                for edge in edges {
+                for &(edge, cost) in edges {
 
-                    // calc the new path cost to the edge
-                    let edge_cost = path_cost + edge.1;
+                    // calc the new path cost to edge
+                    let edge_cost = path_cost + cost;
 
-                    // if new edge cost < existing edge cost
-                    if edge_cost < node_cost[&edge.0].0 {
+                    // if new edge cost < currently known cost @edge
+                    if edge_cost < node_cost[&edge].0 {
 
-                        // set the new lower cost coming from new parent Node
-                        node_cost.entry(edge.0)
+                        // set the new lower cost @node along with related parent Node
+                        node_cost.entry(edge)
                             .and_modify(|c|
                                 *c = (edge_cost, Some(node))
                             );
-
-                        queue.push_front(edge.0);
+                        // push_front for Depth First Search -> slower but finds all paths
+                        // push_back for Breadth First Search -> faster but finds best only
+                        queue.push_back(edge);
                     }
                 }
             }
@@ -103,13 +110,13 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
 }
 
 fn main() {
-    // let edge_list = include!("large_graph.in");
-    // let g = Graph::from_edge_list(&edge_list);
-    //
-    // if let Some((path, cost)) = shortest_path(
-    //     &g, 1000, 9000) {
-    //     println!("1000->9000, {:?} {}", path, cost);
-    // };
+    let edge_list = include!("large_graph.in");
+    let g = Graph::from_edge_list(&edge_list);
+
+    if let Some((path, cost)) = shortest_path(
+        &g, 1000, 9000) {
+        println!("1000->9000, {:?} {}", path, cost);
+    };
 }
 
 #[cfg(test)]
