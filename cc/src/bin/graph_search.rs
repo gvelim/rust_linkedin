@@ -4,17 +4,21 @@ use std::collections::{
     vec_deque::VecDeque
 };
 
-type Node = usize;
 type Cost = usize;
+type Node = usize;
+enum Edge {
+    N(Node),
+    NC(Node, Cost)
+}
 
 struct Graph {
-    edges: HashMap<Node, Vec<(Node, Cost)>>,
+    edges: HashMap<Node, Vec<Edge>>,
     nodes: HashSet<Node>,
 }
 
 impl Graph {
     fn from_edge_list(edge_list: &Vec<(Node, Node, Cost)>) -> Self {
-        let mut adjacency_list: HashMap<Node, Vec<(Node, Cost)>> = HashMap::new();
+        let mut adjacency_list: HashMap<Node, Vec<Edge>> = HashMap::new();
         let mut nodes = HashSet::new();
 
         for &(source, destination, cost) in edge_list.iter() {
@@ -22,7 +26,7 @@ impl Graph {
                 .entry(source)
                 .or_insert_with(|| Vec::new());
 
-            destinations.push((destination, cost));
+            destinations.push(Edge::NC(destination, cost));
 
             nodes.insert(source);
             nodes.insert(destination);
@@ -82,28 +86,29 @@ fn shortest_path(g: &Graph, start: Node, goal: Node) -> Option<(Vec<Node>, Cost)
             if let Some(edges) = g.edges.get(&node) {
 
                 // for each edge
-                for &(edge, cost) in edges {
+                edges.iter()
+                    .filter_map(|edge| if let Edge::NC(edge,cost) = *edge { Some((edge, cost)) } else { panic!("Setup graph using enum type Edge::Cost") } )
+                    .for_each(|(edge,cost)| {
 
-                    // calc the new path cost to edge
-                    let edge_cost = path_cost + cost;
+                        // calc the new path cost to edge
+                        let edge_cost = path_cost + cost;
 
-                    // if new edge cost < currently known cost @edge
-                    if edge_cost < node_cost[&edge].0 {
+                        // if new edge cost < currently known cost @edge
+                        if edge_cost < node_cost[&edge].0 {
 
-                        // set the new lower cost @node along with related parent Node
-                        node_cost.entry(edge)
-                            .and_modify(|c|
-                                *c = (edge_cost, Some(node))
-                            );
-                        // push_front for Depth First Search -> slower but finds all paths
-                        // push_back for Breadth First Search -> faster but finds best only
-                        queue.push_back(edge);
-                    }
+                            // set the new lower cost @node along with related parent Node
+                            node_cost.entry(edge)
+                                .and_modify(|c|
+                                    *c = (edge_cost, Some(node))
+                                );
+                            // push_front for Depth First Search -> slower but finds all paths
+                            // push_back for Breadth First Search -> faster but finds best only
+                            queue.push_back(edge);
+                        }
+                    });
                 }
             }
         }
-
-    }
 
     println!("Path: {:?}", best_path);
     best_path
@@ -134,7 +139,7 @@ mod test {
     }
     #[test]
     fn small_graph() {
-        let edge_list = include!("small_graph.in");
+        let edge_list = include!("../../../../CSX0003RUST/src/graphs/small_graph.in");
         let g = Graph::from_edge_list(&edge_list);
 
         let path = shortest_path(&g, 2, 5);
